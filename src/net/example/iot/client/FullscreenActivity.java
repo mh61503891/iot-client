@@ -13,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.hardware.Sensor;
@@ -36,41 +37,15 @@ import android.view.View;
 public class FullscreenActivity extends Activity implements SensorEventListener {
 
 	private static final String TAG = FullscreenActivity.class.getSimpleName();
-	/**
-	 * Whether or not the system UI should be auto-hidden
-	 * after {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-	 */
 	private static final boolean AUTO_HIDE = true;
-
-	/**
-	 * If {@link #AUTO_HIDE} is set, the number of
-	 * milliseconds to wait after user interaction before
-	 * hiding the system UI.
-	 */
 	private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
-
-	/**
-	 * If set, will toggle the system UI visibility upon
-	 * interaction. Otherwise, will show the system UI
-	 * visibility upon interaction.
-	 */
 	private static final boolean TOGGLE_ON_CLICK = true;
-
-	/**
-	 * The flags to pass to
-	 * {@link SystemUiHider#getInstance}.
-	 */
 	private static final int HIDER_FLAGS = SystemUiHider.FLAG_HIDE_NAVIGATION;
+	private static final String WS_URL = "ws://192.168.1.6:8080";
 
-	/**
-	 * The instance of the {@link SystemUiHider} for this
-	 * activity.
-	 */
 	private SystemUiHider mSystemUiHider;
 	private SensorManager manager;
 	private WebSocketClient mClient;
-
-	//	private Handler mHandler;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -137,51 +112,36 @@ public class FullscreenActivity extends Activity implements SensorEventListener 
 		manager = (SensorManager) getSystemService(SENSOR_SERVICE);
 		try {
 			Log.d(TAG, "ws");
-			URI uri = new URI("ws://192.168.1.6:8080");
+			URI uri = new URI(WS_URL);
 			mClient = new WebSocketClient(uri) {
 				@Override
 				public void onOpen(ServerHandshake handshake) {
-					Log.d(TAG, "onOpen");
+					Log.d(TAG, "onOpen()");
 				}
 
-				//
-				//
 				@Override
 				public void onMessage(final String message) {
-
-					//					Log.d(TAG, "onMessage");
-					//					Log.d(TAG, "Message:" + message);
-					//					mHandler.post(new Runnable() { // ----2
-					//						@Override
-					//						public void run() {
-					//							Toast.makeText(FullscreenActivity.this, message, Toast.LENGTH_SHORT).show();
-					//						}
-					//					});
+					// Log.d(TAG, "onMessage(" + message + ")");
 				}
 
 				@Override
-				public void onError(Exception ex) {
-					Log.d(TAG, "onError");
-					Log.d(TAG, ex.getMessage());
-					ex.printStackTrace();
+				public void onError(Exception e) {
+					Log.d(TAG, "onError(" + e + ")");
+					Log.d(TAG, e.getMessage(), e);
 				}
 
 				@Override
 				public void onClose(int code, String reason, boolean remote) {
-					Log.d(TAG, "onClose" + reason + remote);
-					System.err.println();
+					Log.d(TAG, "onClose(" + reason + "," + remote + ")");
 				}
 			};
-
 			try {
-				Log.d(TAG, "url3");
+				Log.d(TAG, "connecting");
 				mClient.connect();
-				Log.d(TAG, "url4");
+				Log.d(TAG, "connected");
 			} catch (Exception e) {
 				Log.d(TAG, e.getMessage(), e);
-
 			}
-
 		} catch (URISyntaxException e) {
 			Log.d(TAG, e.getMessage(), e);
 		}
@@ -190,25 +150,15 @@ public class FullscreenActivity extends Activity implements SensorEventListener 
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
-
-		// Trigger the initial hide() shortly after the activity has been
-		// created, to briefly hint to the user that UI controls
-		// are available.
 		delayedHide(100);
 	}
 
-	/**
-	 * Touch listener to use for in-layout UI controls to
-	 * delay hiding the system UI. This is to prevent the
-	 * jarring behavior of controls going away while
-	 * interacting with activity UI.
-	 */
 	View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+		@SuppressLint("ClickableViewAccessibility")
 		@Override
 		public boolean onTouch(View view, MotionEvent motionEvent) {
-			if (AUTO_HIDE) {
+			if (AUTO_HIDE)
 				delayedHide(AUTO_HIDE_DELAY_MILLIS);
-			}
 			return false;
 		}
 	};
@@ -221,10 +171,6 @@ public class FullscreenActivity extends Activity implements SensorEventListener 
 		}
 	};
 
-	/**
-	 * Schedules a call to hide() in [delay] milliseconds,
-	 * canceling any previously scheduled calls.
-	 */
 	private void delayedHide(int delayMillis) {
 		mHideHandler.removeCallbacks(mHideRunnable);
 		mHideHandler.postDelayed(mHideRunnable, delayMillis);
@@ -239,8 +185,6 @@ public class FullscreenActivity extends Activity implements SensorEventListener 
 	@Override
 	protected void onResume() {
 		super.onResume();
-
-		//
 		List<Sensor> sensors = manager.getSensorList(Sensor.TYPE_ACCELEROMETER);
 		if (sensors.size() > 0) {
 			Sensor s = sensors.get(0);
@@ -250,8 +194,7 @@ public class FullscreenActivity extends Activity implements SensorEventListener 
 
 	@Override
 	public void onAccuracyChanged(Sensor sensor, int accuracy) {
-		Log.v("onAccuracyChanged", sensor.toString() + Integer.valueOf(accuracy));
-
+		Log.d(TAG, "onAccuracyChanged(" + sensor + "," + Integer.valueOf(accuracy) + ")");
 	}
 
 	@Override
@@ -264,21 +207,14 @@ public class FullscreenActivity extends Activity implements SensorEventListener 
 			json.put("timestamp", event.timestamp);
 			json.put("values", new JSONArray(event.values));
 			json.put("sensor", SensorUtils.toJSON(event.sensor));
-			//			Log.v("json", json.toString());
+			Log.v(TAG, "json(" + json + ")");
 			try {
-				//
-
-				//
 				mClient.send(json.toString());
 			} catch (Exception e) {
-				//				Log.v(TAG, e.getMessage(), e);
-				//				e.printStackTrace();
+				Log.v(TAG, e.getMessage(), e);
 			}
-			//			if (mClient.getConnection().isOpen()) {
-			//			}
 		} catch (JSONException e) {
-			Log.e("onException", e.getMessage(), e);
-			e.printStackTrace();
+			Log.e(TAG, e.getMessage(), e);
 		}
 	}
 }
