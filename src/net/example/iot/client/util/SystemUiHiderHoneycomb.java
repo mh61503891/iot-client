@@ -1,4 +1,4 @@
-package net.example.iot.util;
+package net.example.iot.client.util;
 
 import android.annotation.TargetApi;
 import android.app.Activity;

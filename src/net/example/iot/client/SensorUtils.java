@@ -1,4 +1,4 @@
-package net.example.iot;
+package net.example.iot.client;
 
 import org.json.JSONException;
 import org.json.JSONObject;

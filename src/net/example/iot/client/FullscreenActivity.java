@@ -1,10 +1,11 @@
-package net.example.iot;
+package net.example.iot.client;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import net.example.iot.util.SystemUiHider;
+import net.example.iot.R;
+import net.example.iot.client.util.SystemUiHider;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;

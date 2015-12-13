@@ -1,4 +1,4 @@
-package net.example.iot.util;
+package net.example.iot.client.util;
 
 import android.app.Activity;
 import android.os.Build;
